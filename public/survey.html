@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Friend Finder</title>
+
+    <!-- Bootstrap + fonts + local CSS-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat|Lato" rel="stylesheet"/>
+    <link rel="stylesheet" href="./assets/style.css"/>
+
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Survey Questions</h1>
+        <hr>
+        <h3>About You</h3>
+
+        <form>
+            <div class="form-group">
+                <label for="formName">Name (required)</label>
+                <input type="input" class="form-control" id="formName">
+            </div>
+            <div class="form-group">
+                <label for="formPhoto">Link to Photo Image (required)</label>
+                <input type="input" class="form-control" id="formPhoto">
+            </div>
+            <div class="form-group">
+                <label for="question1">You love chicken pot pie</label>
+                <select class="form-control" id="question1">
+                    <option value="" disabled selected>Select your option</option>
+                    <option>1 (super disagree)</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5 (super agree)</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary">Submit</button>
+        </form>
+
+
+        <footer>
+            <a href="">API Friends List</a>
+            <span> | </span>
+            <a href="https://github.com/nicklascschmidt/friend-finder">GitHub Repo</a>
+        </footer>
+
+    </div>
+
+    <!-- Jquery + local JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="./assets/logic.js"></script>
+</body>
+</html>
+
+<!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS SENT TO OUR SERVER -->
+<script type="text/javascript">
+
+    // In this code below we create the Front-end JavaScript which "POSTS" our form data to our express server.
+    // In essence, when the user hits submit, jQuery grabs all of the fields then sends a post request to our api
+    // Our api recognizes the route (/api/tables)... and then runs the associated code (found in api-routes.js).
+    // In this case the associated code "saves" the data to the table-data.js file or waitinglist-data.js file
+
+    $(".submit").on("click", function(event) {
+      event.preventDefault();
+
+      // Here we grab the form elements
+      var newReservation = {
+        customerName: $("#reserve-name").val().trim(),
+        phoneNumber: $("#reserve-phone").val().trim(),
+        customerEmail: $("#reserve-email").val().trim(),
+        customerID: $("#reserve-unique-id").val().trim()
+      };
+
+      console.log(newReservation);
+
+      // This line is the magic. It"s very similar to the standard ajax function we used.
+      // Essentially we give it a URL, we give it the object we want to send, then we have a "callback".
+      // The callback is the response of the server. In our case, we set up code in api-routes that "returns" true or false
+      // depending on if a tables is available or not.
+
+      $.post("/api/tables", newReservation,
+        function(data) {
+
+          // If a table is available... tell user they are booked.
+          if (data) {
+            alert("Yay! You are officially booked!");
+          }
+
+          // If a table is available... tell user they on the waiting list.
+          else {
+            alert("Sorry you are on the wait list");
+          }
+
+          // Clear the form when submitting
+          $("#reserve-name").val("");
+          $("#reserve-phone").val("");
+          $("#reserve-email").val("");
+          $("#reserve-unique-id").val("");
+
+        });
+
+    });
+
+</script>
+

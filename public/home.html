@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+
+    <title>Friend Finder</title>
+
+    <!-- Bootstrap + fonts + local CSS-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat|Lato" rel="stylesheet"/>
+    <link rel="stylesheet" href="./assets/style.css"/>
+
+</head>
+<body>
+
+    <div class="container">
+
+        <header class="jumbotron container-fluid">
+            <strong><h1>Friend Finder</h1></strong>
+            <hr>
+            <h2>Answer a few basic questions.</h2>
+            <h2>Then find the friend with the greatest compatibility!</h2>
+            <a href="/survey"><button type="button" class="btn btn-primary" id="startButton">Go to Survey</button></a>
+        </header>
+
+        <footer>
+            <a href="/api/friends">API Friends List</a>
+            <span> | </span>
+            <a href="https://github.com/nicklascschmidt/friend-finder">GitHub Repo</a>
+        </footer>
+
+    </div>
+
+
+
+    <!-- Jquery + local JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="./assets/logic.js"></script>
+    <script type="text/javascript" src="../../server.js"></script>
+</body>
+
+<!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS LOADED FROM OUR SERVER -->
+<script type="text/javascript">
+
+    // In this code, jQuery is used to "download" the data from our server
+    // We then dynamically display this content in our table. This is very similar to the group projects you just completed.
+    // It's also very similar to the NYT search application. In fact, I copied a ton of code from there.
+  
+    function runTableQuery() {
+      // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
+      $.ajax({ url: "/api/tables", method: "GET" })
+        .then(function(tableData) {
+  
+          // Here we then log the tableData to console, where it will show up as an object.
+          console.log(tableData);
+          console.log("------------------------------------");
+  
+          // Loop through and display each of the customers
+          for (var i = 0; i < tableData.length; i++) {
+  
+            // Get a reference to the tableList element and populate it with tables
+            var tableList = $("#tableList");
+  
+            // Then display the fields in the HTML (Section Name, Date, URL)
+            var listItem = $("<li class='list-group-item mt-4'>");
+  
+            listItem.append(
+              $("<h2>").text("Table #" + (i + 1)),
+              $("<hr>"),
+              $("<h2>").text("ID: " + tableData[i].customerID),
+              $("<h2>").text("Name: " + tableData[i].customerName),
+              $("<h2>").text("Email: " + tableData[i].customerEmail),
+              $("<h2>").text("Phone: " + tableData[i].phoneNumber)
+            );
+  
+            tableList.append(listItem);
+          }
+        });
+    }
+  
+    function runWaitListQuery() {
+  
+      // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
+      $.ajax({ url: "/api/waitlist", method: "GET" })
+        .then(function(waitData) {
+  
+          // Here we then log the waitlistData to console, where it will show up as an object.
+          console.log(waitData);
+          console.log("------------------------------------");
+  
+          // Loop through and display each of the customers
+          for (var i = 0; i < waitData.length; i++) {
+  
+            // Get a reference to the waitList element and populate it with tables
+            var waitList = $("#waitList");
+  
+            // Then display the fields in the HTML (Section Name, Date, URL)
+            var listItem = $("<li class='list-group-item mt-4'>");
+  
+            listItem.append(
+              $("<h2>").text("Table #" + (i + 1)),
+              $("<hr>"),
+              $("<h2>").text("ID: " + waitData[i].customerID),
+              $("<h2>").text("Name: " + waitData[i].customerName),
+              $("<h2>").text("Email: " + waitData[i].customerEmail),
+              $("<h2>").text("Phone: " + waitData[i].phoneNumber)
+            );
+  
+            waitList.append(listItem);
+          }
+        });
+    }
+  
+    // This function resets all of the data in our tables. This is intended to let you restart a demo.
+    function clearTable() {
+      alert("Clearing...");
+  
+      // Clear the tables on the server and then empty the elements on the client
+      $.ajax({ url: "/api/clear", method: "POST" }).then(function() {
+        $("#waitList").empty();
+        $("#tableList").empty();
+      });
+    }
+  
+    $("#clear").on("click", clearTable);
+  
+  
+    // Run Queries!
+    // ==========================================
+    runTableQuery();
+    runWaitListQuery();
+  
+  
+</script>
+  
+</html>
