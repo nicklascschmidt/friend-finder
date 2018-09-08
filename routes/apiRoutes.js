@@ -4,8 +4,7 @@
 // These data sources hold arrays of information on table-data, waitinglist, etc.
 // ===============================================================================
 
-var tableData = require("../data/friends");
-// var waitListData = require("../data/waitinglistData");
+var friendsData = require("../data/friends");
 
 
 // ===============================================================================
@@ -24,11 +23,9 @@ module.exports = function(app) {
   //  * A POST routes `/api/friends`. This will be used to handle incoming 
   //  * survey results. This route will also be used to handle the compatibility logic. 
 
-
   app.get("/api/friends", function(req, res) {
-    res.json(tableData);
+    return res.json(friendsData);
   });
-
 
 
   // API POST Requests
@@ -43,20 +40,9 @@ module.exports = function(app) {
     // Note the code here. Our "server" will respond to requests and let users know if they have a table or not.
     // It will do this by sending out the value "true" have a table
     // req.body is available since we're using the body-parser middleware
-    console.log("req.body",req.body);
-    console.log("res",res);
-    // res.json(true);
+
+    var newUser = req.body;
+    friendsData.push(newUser);
   });
 
-  // ---------------------------------------------------------------------------
-  // I added this below code so you could clear out the table while working with the functionality.
-  // Don"t worry about it!
-
-  // app.post("/api/clear", function(req, res) {
-  //   // Empty out the arrays of data
-  //   tableData.length = [];
-  //   waitListData.length = [];
-
-  //   res.json({ ok: true });
-  // });
 };

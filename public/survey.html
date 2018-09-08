@@ -30,19 +30,51 @@
                 <label for="question1">You love chicken pot pie</label>
                 <select class="form-control" id="question1">
                     <option value="" disabled selected>Select your option</option>
-                    <option>1 (super disagree)</option>
+                    <option>1</option>
                     <option>2</option>
                     <option>3</option>
                     <option>4</option>
-                    <option>5 (super agree)</option>
+                    <option>5</option>
                 </select>
             </div>
-            <button type="button" class="btn btn-primary">Submit</button>
+            <div class="form-group">
+                <label for="question1">You love refried beans</label>
+                <select class="form-control" id="question2">
+                    <option value="" disabled selected>Select your option</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="question1">You love disco</label>
+                <select class="form-control" id="question3">
+                    <option value="" disabled selected>Select your option</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" id="buttonSubmit">Submit</button>
         </form>
+
+        <!-- Current Tables in Use -->
+        <div class="card">
+            <div class="card-header">
+              <h4>Current Reservations</h4>
+            </div>
+            <div class="card-body">
+              <ul id="tableList" class="list-group"></ul>
+            </div>
+          </div>
 
 
         <footer>
-            <a href="">API Friends List</a>
+            <a href="/api/friends">API Friends List</a>
             <span> | </span>
             <a href="https://github.com/nicklascschmidt/friend-finder">GitHub Repo</a>
         </footer>
@@ -51,9 +83,7 @@
 
     <!-- Jquery + local JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="./assets/logic.js"></script>
-</body>
-</html>
+
 
 <!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS SENT TO OUR SERVER -->
 <script type="text/javascript">
@@ -63,46 +93,155 @@
     // Our api recognizes the route (/api/tables)... and then runs the associated code (found in api-routes.js).
     // In this case the associated code "saves" the data to the table-data.js file or waitinglist-data.js file
 
-    $(".submit").on("click", function(event) {
+    $("#buttonSubmit").on("click", function(event) {
       event.preventDefault();
 
+      console.log("SUBMIT BUTTON CLICKED");
+
       // Here we grab the form elements
-      var newReservation = {
-        customerName: $("#reserve-name").val().trim(),
-        phoneNumber: $("#reserve-phone").val().trim(),
-        customerEmail: $("#reserve-email").val().trim(),
-        customerID: $("#reserve-unique-id").val().trim()
-      };
+        var newUser = {
+            name: $("#formName").val().trim(),
+            photo: $("#formPhoto").val().trim(),
+            scores:[
+                $("#question1").val().trim(),
+                $("#question2").val().trim(),
+                $("#question3").val().trim()
+            ]
+        };
 
-      console.log(newReservation);
-
+      
       // This line is the magic. It"s very similar to the standard ajax function we used.
       // Essentially we give it a URL, we give it the object we want to send, then we have a "callback".
-      // The callback is the response of the server. In our case, we set up code in api-routes that "returns" true or false
-      // depending on if a tables is available or not.
+      // The callback is the response of the server.
 
-      $.post("/api/tables", newReservation,
-        function(data) {
-
-          // If a table is available... tell user they are booked.
-          if (data) {
-            alert("Yay! You are officially booked!");
-          }
-
-          // If a table is available... tell user they on the waiting list.
-          else {
-            alert("Sorry you are on the wait list");
-          }
-
-          // Clear the form when submitting
-          $("#reserve-name").val("");
-          $("#reserve-phone").val("");
-          $("#reserve-email").val("");
-          $("#reserve-unique-id").val("");
-
+        // AJAX post the data to the friends API.
+        $.post("/api/friends", newUser, function(data, status) {
+            console.log("Data: " + data + "\nStatus: " + status);
         });
+
+        runTableQuery();
+        // getMatch();
+        // clearInputs();
 
     });
 
+    function clearInputs() {
+        // delete input values
+        $("#formName").val("");
+        $("#formPhoto").val("");
+        $("#question1").val("");
+        $("#question2").val("");
+        $("#question3").val("");
+    }
+
+    // save just in case
+    // // Grab the result from the AJAX post so that the best match's name and photo are displayed.
+    // $("#match-name").text(data.name);
+    // $("#match-img").attr("src", data.photo);
+
+    // // Show the modal with the best match
+    // $("#results-modal").modal("toggle");
+
+    //   // Clear the form when submitting
+    //   $("#reserve-name").val("");
+
+
+// <!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS LOADED FROM OUR SERVER -->
+
+    // In this code, jQuery is used to "download" the data from our server
+    // We then dynamically display this content in our table. This is very similar to the group projects you just completed.
+    // It's also very similar to the NYT search application. In fact, I copied a ton of code from there.
+
+
+    function runTableQuery() {
+        $("#tableList").empty();
+      // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
+      $.ajax({ url: "/api/friends", method: "GET" })
+        .then(function(friendsData) {
+  
+          // Here we then log the tableData to console, where it will show up as an object.
+          console.log("this is friendsData",friendsData);
+          console.log("------------------------------------");
+  
+          // Loop through and display each of the customers
+          for (var i = 0; i < friendsData.length; i++) {
+  
+            // Get a reference to the tableList element and populate it with tables
+            var tableList = $("#tableList");
+  
+            // Then display the fields in the HTML (Section Name, Date, URL)
+            var listItem = $("<li class='list-group-item mt-4'>");
+  
+            listItem.append(
+              $("<h2>").text("Name: " + friendsData[i].name),
+              $("<h2>").text("Photo: " + friendsData[i].photo),
+              $("<h2>").text("Score: " + friendsData[i].scores)
+            );
+  
+            tableList.append(listItem);
+            console.log(tableList);
+          }
+        });
+    }
+
+    function getMatch() {
+      // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
+      $.ajax({ url: "/api/friends", method: "GET" })
+        .then(function(friendsData) {
+  
+            if (friendsData[0].name) {
+                console.log("getMatch is running.......");
+                var currentScores = newUser.scores[m];
+
+                // loop through the API list of possible friends
+                for (var n=0; n < friendsData.length; n++) {
+
+                    // save name and photo to show to user
+                    var name = friendsData[n].name;
+                    var photo = friendsData[n].photo;
+                    console.log("name",name);
+                    console.log("photo",photo);
+
+                    var otherScores = friendsData[n].scores;
+                    
+                    var scoreComparisonArray = [];
+                    var totalDifference;
+                    for (var m=0; m < scores.length; m++) {
+                        var score = parseInt(scores[m]);
+                        console.log("scores",score);
+
+                        
+                        console.log("user Scores",newUser.scores);
+
+                    }
+                }
+            }
+            
+            console.log(friendsData[0].name);
+            console.log(friendsData[0].scores[0]);
+            console.log(friendsData[0].scores[1]);
+          
+        });
+    }
+  
+    // This function resets all of the data in our tables. This is intended to let you restart a demo.
+    function clearTable() {
+      alert("Clearing...");
+  
+      // Clear the tables on the server and then empty the elements on the client
+      $.ajax({ url: "/api/clear", method: "POST" }).then(function() {
+        $("#waitList").empty();
+        $("#tableList").empty();
+      });
+    }
+  
+    $("#clear").on("click", clearTable);
+  
+    runTableQuery();
+
+  
 </script>
+
+</body>
+</html>
 
