@@ -43,6 +43,7 @@ module.exports = function(app) {
 
     var newUser = req.body;
     friendsData.push(newUser);
+    res.json(friendsData);
   });
 
 };

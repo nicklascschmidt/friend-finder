@@ -11,7 +11,13 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="bestMatch">
+        <h3>Your Match</h3>
+        <div id="bestMatchPerson"></div>
+        <br>
+        <button type="button" class="btn btn-primary" id="hideBestMatch">Hide Me</button>
+    </div>
+    <div class="container" id="allTheThings">
 
         <h1>Survey Questions</h1>
         <hr>
@@ -62,17 +68,6 @@
             <button type="button" class="btn btn-primary" id="buttonSubmit">Submit</button>
         </form>
 
-        <!-- Current Tables in Use -->
-        <div class="card">
-            <div class="card-header">
-              <h4>Current Reservations</h4>
-            </div>
-            <div class="card-body">
-              <ul id="tableList" class="list-group"></ul>
-            </div>
-          </div>
-
-
         <footer>
             <a href="/api/friends">API Friends List</a>
             <span> | </span>
@@ -88,18 +83,32 @@
 <!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS SENT TO OUR SERVER -->
 <script type="text/javascript">
 
+    function showBestMatch() {
+        document.getElementById("bestMatch").style.display = "block";
+        document.getElementById("allTheThings").style.display = "none";
+    }
+
+    function hideBestMatch() {
+        document.getElementById("bestMatch").style.display = "none";
+        document.getElementById("allTheThings").style.display = "block";
+    }
+    hideBestMatch();
+    $("#hideBestMatch").on("click",function() {
+        hideBestMatch();
+    });
+
     // In this code below we create the Front-end JavaScript which "POSTS" our form data to our express server.
     // In essence, when the user hits submit, jQuery grabs all of the fields then sends a post request to our api
     // Our api recognizes the route (/api/tables)... and then runs the associated code (found in api-routes.js).
     // In this case the associated code "saves" the data to the table-data.js file or waitinglist-data.js file
-
+    var newUser;
     $("#buttonSubmit").on("click", function(event) {
       event.preventDefault();
 
       console.log("SUBMIT BUTTON CLICKED");
 
       // Here we grab the form elements
-        var newUser = {
+        newUser = {
             name: $("#formName").val().trim(),
             photo: $("#formPhoto").val().trim(),
             scores:[
@@ -119,9 +128,7 @@
             console.log("Data: " + data + "\nStatus: " + status);
         });
 
-        runTableQuery();
-        // getMatch();
-        // clearInputs();
+        getMatch();
 
     });
 
@@ -132,18 +139,8 @@
         $("#question1").val("");
         $("#question2").val("");
         $("#question3").val("");
+        $("#bestMatchPerson").val("");
     }
-
-    // save just in case
-    // // Grab the result from the AJAX post so that the best match's name and photo are displayed.
-    // $("#match-name").text(data.name);
-    // $("#match-img").attr("src", data.photo);
-
-    // // Show the modal with the best match
-    // $("#results-modal").modal("toggle");
-
-    //   // Clear the form when submitting
-    //   $("#reserve-name").val("");
 
 
 // <!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS LOADED FROM OUR SERVER -->
@@ -153,75 +150,92 @@
     // It's also very similar to the NYT search application. In fact, I copied a ton of code from there.
 
 
-    function runTableQuery() {
-        $("#tableList").empty();
-      // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
-      $.ajax({ url: "/api/friends", method: "GET" })
-        .then(function(friendsData) {
-  
-          // Here we then log the tableData to console, where it will show up as an object.
-          console.log("this is friendsData",friendsData);
-          console.log("------------------------------------");
-  
-          // Loop through and display each of the customers
-          for (var i = 0; i < friendsData.length; i++) {
-  
-            // Get a reference to the tableList element and populate it with tables
-            var tableList = $("#tableList");
-  
-            // Then display the fields in the HTML (Section Name, Date, URL)
-            var listItem = $("<li class='list-group-item mt-4'>");
-  
-            listItem.append(
-              $("<h2>").text("Name: " + friendsData[i].name),
-              $("<h2>").text("Photo: " + friendsData[i].photo),
-              $("<h2>").text("Score: " + friendsData[i].scores)
-            );
-  
-            tableList.append(listItem);
-            console.log(tableList);
-          }
-        });
-    }
+//     * With that done, compare the difference between current user's scores against those from other users, question by question. 
+//     * Add up the differences to calculate the `totalDifference`.
+//      * Example: 
+//        * User 1: `[5, 1, 4, 4, 5, 1, 2, 5, 4, 1]`
+//        * User 2: `[3, 2, 6, 4, 5, 1, 2, 5, 4, 1]`
+//        * Total Difference: **2 + 1 + 2 =** **_5_**
+//    * Remember to use the absolute value of the differences. Put another way: no negative solutions! Your app should calculate 
+//    * both `5-3` and `3-5` as `2`, and so on. 
+//    * The closest match will be the user with the least amount of difference.
+
+    // global
+    var totalDifference = 0;
+    var totalDifferenceArray = [];
+    var bestMatch;
 
     function getMatch() {
       // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
       $.ajax({ url: "/api/friends", method: "GET" })
         .then(function(friendsData) {
+            console.log("getMatch is running.......");
   
-            if (friendsData[0].name) {
-                console.log("getMatch is running.......");
-                var currentScores = newUser.scores[m];
 
-                // loop through the API list of possible friends
-                for (var n=0; n < friendsData.length; n++) {
+            var userScores = newUser.scores;
+            console.log("userScores",userScores);
+            console.log("friendsData",friendsData);
 
-                    // save name and photo to show to user
-                    var name = friendsData[n].name;
-                    var photo = friendsData[n].photo;
-                    console.log("name",name);
-                    console.log("photo",photo);
+            // loop through the API list of possible friends | minus one bc don't wanna compare to itself
+            for (var n=0; n < friendsData.length-1; n++) {
 
-                    var otherScores = friendsData[n].scores;
-                    
-                    var scoreComparisonArray = [];
-                    var totalDifference;
-                    for (var m=0; m < scores.length; m++) {
-                        var score = parseInt(scores[m]);
-                        console.log("scores",score);
+                // save name and photo to show to user
+                var name = friendsData[n].name;
+                var photo = friendsData[n].photo;
+                console.log("name",name);
+                console.log("photo",photo);
 
-                        
-                        console.log("user Scores",newUser.scores);
+                var compareScore = friendsData[n].scores;
+                console.log("compareScore",compareScore);
+                
+                for (var m=0; m < compareScore.length; m++) {
+                    var compareScore = parseInt(compareScore[m]);
+                    var userScore = parseInt(userScores[m]);
+                    console.log("compareScore",compareScore);
+                    console.log("userScore",userScore);
 
-                    }
+
+                    var diff = compareScore - userScore;
+                    console.log(diff);
+                    totalDifference += diff;
                 }
+                totalDifferenceArray.push(totalDifference);
+                console.log("totalDifference",totalDifference);
             }
             
-            console.log(friendsData[0].name);
-            console.log(friendsData[0].scores[0]);
-            console.log(friendsData[0].scores[1]);
+            console.log("totalDifferenceArray",totalDifferenceArray);
+            var bestMatchNum = Math.min(...totalDifferenceArray);
+            var bestMatchIndex;
+            for (var n=0; n < totalDifferenceArray.length; n++) {
+                console.log("totalDifferenceArray[n]",totalDifferenceArray[n]);
+                console.log("bestMatchNum",bestMatchNum);
+                if (totalDifferenceArray[n] === bestMatchNum) {
+                    bestMatchIndex = n;
+                    console.log("bestMatchIndex",bestMatchIndex);
+                }
+            }
+            bestMatch = friendsData[bestMatchIndex];
+            console.log("bestMatch",bestMatch);
+
+            printBestMatch();
           
         });
+        clearInputs();
+    }
+
+    function printBestMatch() {
+        var $name = $("<p>");
+        $name.text(bestMatch.name);
+        var $image = $("<img>");
+        $image.attr("src",bestMatch.photo);
+        $image.attr("width",400);
+        $image.attr("picture did not work");
+        
+
+        $("#bestMatchPerson").append($name);
+        $("#bestMatchPerson").append($image);
+        
+        showBestMatch(); // unhide div
     }
   
     // This function resets all of the data in our tables. This is intended to let you restart a demo.
@@ -236,8 +250,6 @@
     }
   
     $("#clear").on("click", clearTable);
-  
-    runTableQuery();
 
   
 </script>
